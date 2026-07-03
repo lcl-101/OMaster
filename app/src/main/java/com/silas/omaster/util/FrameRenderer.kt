@@ -20,13 +20,14 @@ enum class OutputRatio(val label: String, val widthToHeight: Float, val platform
 object FrameRenderer {
 
     private const val BASE = 1080
-    private const val TOP_AREA_RATIO = 0.30f
-    private const val IMAGE_PADDING = 36f
-    private const val BOTTOM_RESERVED = 60f
-
-    private const val TITLE_SIZE = 52f
-    private const val WATERMARK_SIZE = 22f
-    private const val ROUNDED_RADIUS = 48f
+    private const val TOP_RATIO_WITH_TITLE = 0.30f
+    private const val TOP_RATIO_WITHOUT_TITLE = 0.08f
+    private const val PADDING_RATIO = 0.035f
+    private const val BOTTOM_RATIO = 0.04f
+    private const val TITLE_SIZE_RATIO = 0.09f
+    private const val TITLE_MAX_SIZE = 64f
+    private const val TITLE_MIN_SIZE = 32f
+    private const val ROUNDED_RADIUS_RATIO = 0.04f
 
     data class Params(
         val source: Bitmap,
@@ -57,16 +58,21 @@ object FrameRenderer {
 
         drawBackground(canvas, dominantColor, outputWidth, outputHeight)
 
-        val topAreaBottom = outputHeight * TOP_AREA_RATIO
         val hasTitle = title.isNotBlank()
+        val topRatio = if (hasTitle) TOP_RATIO_WITH_TITLE else TOP_RATIO_WITHOUT_TITLE
+        val topAreaBottom = outputHeight * topRatio
+
+        val imagePadding = maxOf(16f, outputWidth * PADDING_RATIO)
+        val bottomReserved = maxOf(36f, outputHeight * BOTTOM_RATIO)
 
         if (hasTitle) {
-            drawTitleText(canvas, title, textColor, outputWidth, topAreaBottom)
+            val titleSize = minOf(TITLE_MAX_SIZE, maxOf(TITLE_MIN_SIZE, topAreaBottom * TITLE_SIZE_RATIO))
+            drawTitleText(canvas, title, textColor, outputWidth, topAreaBottom, titleSize)
         }
 
-        val imageTop = topAreaBottom + IMAGE_PADDING
-        val imageMaxWidth = outputWidth - IMAGE_PADDING * 2
-        val imageMaxHeight = outputHeight - imageTop - BOTTOM_RESERVED
+        val imageTop = topAreaBottom + imagePadding
+        val imageMaxWidth = outputWidth - imagePadding * 2
+        val imageMaxHeight = outputHeight - imageTop - bottomReserved
 
         val scale = minOf(
             imageMaxWidth / source.width.toFloat(),
@@ -78,10 +84,11 @@ object FrameRenderer {
         val drawTop = imageTop + (imageMaxHeight - drawHeight) / 2f
 
         val imageRect = RectF(drawLeft, drawTop, drawLeft + drawWidth, drawTop + drawHeight)
-        val cr = if (useRoundedCorners) ROUNDED_RADIUS else 0f
+        val roundedRadius = maxOf(16f, outputWidth * ROUNDED_RADIUS_RATIO)
+        val cr = if (useRoundedCorners) roundedRadius else 0f
 
         if (cr > 0f) {
-            drawImageShadow(canvas, imageRect)
+            drawImageShadow(canvas, imageRect, roundedRadius)
         }
 
         val clipPath = Path().apply {
@@ -96,7 +103,7 @@ object FrameRenderer {
         canvas.restore()
 
         if (showWatermark) {
-            drawWatermark(canvas, textColor, outputWidth, outputHeight)
+            drawWatermark(canvas, textColor, outputWidth, outputHeight, bottomReserved)
         }
 
         output
@@ -123,18 +130,19 @@ object FrameRenderer {
         return AndroidColor.HSVToColor(hsv)
     }
 
-    private fun drawTitleText(canvas: Canvas, title: String, textColor: Int, w: Int, topBottom: Float) {
+    private fun drawTitleText(canvas: Canvas, title: String, textColor: Int, w: Int, topBottom: Float, titleSize: Float) {
         val paint = Paint().apply {
             color = textColor
-            textSize = TITLE_SIZE
+            textSize = titleSize
             typeface = Typeface.DEFAULT_BOLD
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
+            setShadowLayer(2f, 0f, 1f, 0x33000000)
         }
-        canvas.drawText(title, w / 2f, topBottom / 2 + TITLE_SIZE / 3, paint)
+        canvas.drawText(title, w / 2f, topBottom / 2 + titleSize / 3, paint)
     }
 
-    private fun drawImageShadow(canvas: Canvas, rect: RectF) {
+    private fun drawImageShadow(canvas: Canvas, rect: RectF, radius: Float) {
         val shadowPaint = Paint().apply {
             isAntiAlias = true
             color = 0x22000000
@@ -142,18 +150,19 @@ object FrameRenderer {
         }
         val shadowRect = RectF(rect.left + 4f, rect.top + 8f, rect.right - 2f, rect.bottom + 8f)
         val shadowPath = Path().apply {
-            addRoundRect(shadowRect, ROUNDED_RADIUS, ROUNDED_RADIUS, Path.Direction.CW)
+            addRoundRect(shadowRect, radius, radius, Path.Direction.CW)
         }
         canvas.drawPath(shadowPath, shadowPaint)
     }
 
-    private fun drawWatermark(canvas: Canvas, textColor: Int, w: Int, h: Int) {
+    private fun drawWatermark(canvas: Canvas, textColor: Int, w: Int, h: Int, bottomReserved: Float) {
+        val watermarkSize = maxOf(14f, bottomReserved * 0.45f)
         val paint = Paint().apply {
             color = textColor and 0x00FFFFFF or 0x35000000
-            textSize = WATERMARK_SIZE
+            textSize = watermarkSize
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("OMaster", w / 2f, h - 36f, paint)
+        canvas.drawText("OMaster", w / 2f, h - bottomReserved / 2 + watermarkSize / 3, paint)
     }
 }

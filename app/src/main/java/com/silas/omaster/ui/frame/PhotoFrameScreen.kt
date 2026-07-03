@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Save
@@ -50,6 +52,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.layout.ContentScale
@@ -162,6 +165,8 @@ fun PhotoFrameScreen(
                         dateTimeText = dateTimeText,
                         useRounded = useRounded,
                         selectedRatio = selectedRatio,
+                        palette = state.colors?.palette ?: emptyList(),
+                        selectedColorIndex = state.selectedColorIndex,
                         onDateTimeChange = {
                             dateTimeText = it
                             viewModel.updateTitle(it)
@@ -173,6 +178,9 @@ fun PhotoFrameScreen(
                         onRatioChanged = {
                             selectedRatio = it
                             viewModel.selectRatio(it)
+                        },
+                        onColorSelected = { index ->
+                            viewModel.selectColorIndex(index)
                         },
                         onPickNewImage = {
                             exifSynced = false
@@ -227,13 +235,69 @@ private fun PreviewArea(state: FrameState) {
 }
 
 @Composable
+private fun ColorPalettePicker(
+    palette: List<Int>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit
+) {
+    Column {
+        Text(stringResource(R.string.photoframe_color_theme), style = MaterialTheme.typography.bodyMedium, color = themedTextPrimary())
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            palette.forEachIndexed { index, color ->
+                val isSelected = index == selectedIndex
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(androidx.compose.ui.graphics.Color(color))
+                        .then(
+                            if (isSelected) Modifier.border(
+                                2.5.dp,
+                                MaterialTheme.colorScheme.primary,
+                                RoundedCornerShape(10.dp)
+                            ) else Modifier
+                        )
+                        .clickable { onSelect(index) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = getCheckIconColor(color),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun getCheckIconColor(bgColor: Int): androidx.compose.ui.graphics.Color {
+    val r = android.graphics.Color.red(bgColor)
+    val g = android.graphics.Color.green(bgColor)
+    val b = android.graphics.Color.blue(bgColor)
+    val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+    return if (luminance > 0.55) androidx.compose.ui.graphics.Color.Black
+    else androidx.compose.ui.graphics.Color.White
+}
+
+@Composable
 private fun EditPanel(
     dateTimeText: String,
     useRounded: Boolean,
     selectedRatio: OutputRatio,
+    palette: List<Int>,
+    selectedColorIndex: Int,
     onDateTimeChange: (String) -> Unit,
     onRoundedChanged: (Boolean) -> Unit,
     onRatioChanged: (OutputRatio) -> Unit,
+    onColorSelected: (Int) -> Unit,
     onPickNewImage: () -> Unit
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
@@ -308,6 +372,15 @@ private fun EditPanel(
             }
 
             Spacer(Modifier.height(16.dp))
+
+            if (palette.isNotEmpty()) {
+                ColorPalettePicker(
+                    palette = palette,
+                    selectedIndex = selectedColorIndex,
+                    onSelect = onColorSelected
+                )
+                Spacer(Modifier.height(16.dp))
+            }
 
             OutlinedTextField(
                 value = dateTimeText,

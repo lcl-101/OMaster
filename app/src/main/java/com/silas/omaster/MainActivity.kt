@@ -3,6 +3,8 @@ package com.silas.omaster
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -77,6 +80,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.silas.omaster.data.repository.PresetRepository
+import com.silas.omaster.network.PresetRemoteManager
 
 import androidx.compose.runtime.collectAsState
 import com.silas.omaster.data.config.ConfigCenter
@@ -133,6 +137,8 @@ sealed class Screen {
     @Serializable
     data object PhotoFrame : Screen()
 }
+
+private const val SURVEY_URL = "https://www.wjx.cn/vm/your_survey_id.aspx"
 
 class MainActivity : ComponentActivity() {
 
@@ -345,7 +351,23 @@ fun MainApp(
         }
     }
 
-    // 节假日问候检查（主界面就绪后立即检查）
+    // 自动检查订阅更新（每日一次）
+    LaunchedEffect(Unit) {
+        if (config.shouldAutoUpdateSubscriptions()) {
+            delay(4000)
+            try {
+                val subs = config.subscriptionsFlow.value.filter { it.isEnabled }
+                if (subs.isNotEmpty()) {
+                    for (sub in subs) {
+                        PresetRemoteManager.fetchAndSave(context, sub.url)
+                    }
+                    PresetRepository.getInstance(context).reloadDefaultPresets()
+                    config.markSubscriptionsUpdated()
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
     LaunchedEffect(Unit) {
         delay(600)
         val manager = HolidayGreetingManager.getInstance(context)
@@ -558,12 +580,16 @@ fun MainApp(
             }
 
             composable<Screen.About> {
+                val localContext = androidx.compose.ui.platform.LocalContext.current
                 com.silas.omaster.ui.detail.ProfileScreen(
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings)
                     },
                     onNavigateToSubscription = {
                         navController.navigate(Screen.Subscription)
+                    },
+                    onNavigateToSurvey = {
+                        localContext.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SURVEY_URL)))
                     },
                     onScrollStateChanged = { isScrollingUp ->
                         isHomeScrollingUp = isScrollingUp
@@ -578,12 +604,16 @@ fun MainApp(
             }
 
             composable<Screen.Discover> {
+                val context = LocalContext.current
                 DiscoverScreen(
                     onNavigateToColorWalk = {
                         navController.navigate(Screen.ColorWalk)
                     },
                     onNavigateToPhotoFrame = {
                         navController.navigate(Screen.PhotoFrame)
+                    },
+                    onNavigateToSurvey = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SURVEY_URL)))
                     },
                     onScrollStateChanged = { isScrollingUp ->
                         isHomeScrollingUp = isScrollingUp

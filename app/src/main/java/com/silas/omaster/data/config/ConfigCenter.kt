@@ -106,7 +106,6 @@ class ConfigCenter private constructor(context: Context) {
         }
 
     private fun loadDarkMode(): com.silas.omaster.data.local.DarkMode {
-        // 尝试读取新版本的字符串配置
         val modeName = prefs.getString(KEY_DARK_MODE, null)
         if (modeName != null) {
             return try {
@@ -115,10 +114,7 @@ class ConfigCenter private constructor(context: Context) {
                 com.silas.omaster.data.local.DarkMode.SYSTEM
             }
         }
-        // 兼容旧版本的布尔值
-        val oldValue = prefs.getBoolean(KEY_DARK_MODE_OLD, true)
-        return if (oldValue) com.silas.omaster.data.local.DarkMode.DARK 
-               else com.silas.omaster.data.local.DarkMode.LIGHT
+        return com.silas.omaster.data.local.DarkMode.SYSTEM
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -298,6 +294,36 @@ class ConfigCenter private constructor(context: Context) {
     }
 
     // ═══════════════════════════════════════════════════════════
+    // 系统配置 - 订阅自动更新
+    // ═══════════════════════════════════════════════════════════
+
+    private val _autoUpdateSubscriptionFlow = MutableStateFlow(loadAutoUpdateSubscription())
+    val autoUpdateSubscriptionFlow: StateFlow<Boolean> = _autoUpdateSubscriptionFlow.asStateFlow()
+
+    var isAutoUpdateSubscriptionEnabled: Boolean
+        get() = _autoUpdateSubscriptionFlow.value
+        set(value) {
+            _autoUpdateSubscriptionFlow.value = value
+            prefs.edit().putBoolean(KEY_AUTO_UPDATE_SUBSCRIPTION, value).apply()
+        }
+
+    fun shouldAutoUpdateSubscriptions(): Boolean {
+        if (!isAutoUpdateSubscriptionEnabled) return false
+        val today = java.time.LocalDate.now().toString()
+        val lastUpdate = prefs.getString(KEY_LAST_SUBSCRIPTION_UPDATE, null)
+        return lastUpdate != today
+    }
+
+    fun markSubscriptionsUpdated() {
+        val today = java.time.LocalDate.now().toString()
+        prefs.edit().putString(KEY_LAST_SUBSCRIPTION_UPDATE, today).apply()
+    }
+
+    private fun loadAutoUpdateSubscription(): Boolean {
+        return prefs.getBoolean(KEY_AUTO_UPDATE_SUBSCRIPTION, true)  // 默认开启
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // 订阅配置 - 委托给 SubscriptionConfig
     // ═══════════════════════════════════════════════════════════
 
@@ -392,7 +418,6 @@ class ConfigCenter private constructor(context: Context) {
         // UserConfig Keys
         private const val KEY_THEME_ID = "theme_id"
         private const val KEY_DARK_MODE = "dark_mode_v2"
-        private const val KEY_DARK_MODE_OLD = "dark_mode"
         private const val KEY_APP_LANGUAGE = "app_language"
         private const val KEY_VIBRATION_ENABLED = "vibration_enabled"
         private const val KEY_FLOATING_WINDOW_OPACITY = "floating_window_opacity"
@@ -404,6 +429,8 @@ class ConfigCenter private constructor(context: Context) {
         // SystemConfig Keys
         private const val KEY_UPDATE_CHANNEL = "update_channel"
         private const val KEY_AUTO_CHECK_UPDATE = "auto_check_update"
+        private const val KEY_AUTO_UPDATE_SUBSCRIPTION = "auto_update_subscription"
+        private const val KEY_LAST_SUBSCRIPTION_UPDATE = "last_subscription_update_date"
 
         @Volatile
         private var INSTANCE: ConfigCenter? = null

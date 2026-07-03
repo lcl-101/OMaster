@@ -5,10 +5,8 @@ import com.silas.omaster.data.config.ConfigCenter
 import com.silas.omaster.data.config.SubscriptionConfig
 import com.silas.omaster.model.MasterPreset
 import com.silas.omaster.model.PresetList
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.json.Json
 import java.io.IOException
-import java.io.InputStreamReader
 import java.text.Normalizer
 import java.util.Locale
 
@@ -30,7 +28,7 @@ import java.util.Locale
  */
 object JsonUtil {
 
-    private val gson = Gson()
+    private val json = Json { ignoreUnknownKeys = true }
     
     /**
      * 【内存缓存】
@@ -114,35 +112,21 @@ object JsonUtil {
                 if (subFile.exists()) {
                     // 如果存在订阅文件，加载它
                     try {
-                        subFile.inputStream().use { inputStream ->
-                            InputStreamReader(inputStream).use { reader ->
-                                val presetListType = object : TypeToken<PresetList>() {}.type
-                                val presetList: PresetList? = gson.fromJson(reader, presetListType)
-                                if (presetList != null) {
-                                    val processed = processPresets(presetList.presets ?: emptyList(), sub.url)
-                                    // 注意：不再从订阅文件读取 version 覆盖 currentPresetsVersion
-                                    // currentPresetsVersion 只用于检测 presets_remote.json 旧文件迁移
-                                    allPresets.addAll(processed)
-                                }
-                            }
-                        }
+                        val text = subFile.readText()
+                        val presetList = json.decodeFromString(PresetList.serializer(), text)
+                        val processed = processPresets(presetList.presets ?: emptyList(), sub.url)
+                        allPresets.addAll(processed)
                     } catch (e: Exception) {
                         Logger.e("JsonUtil", "Failed to load sub file: ${sub.url}", e)
                     }
                 } else if (sub.url == SubscriptionConfig.DEFAULT_PRESET_URL) {
                     // 如果是官方订阅但文件不存在，则从 assets 加载
                     try {
-                        context.assets.open(fileName).use { inputStream ->
-                            InputStreamReader(inputStream).use { reader ->
-                                val presetListType = object : TypeToken<PresetList>() {}.type
-                                val presetList: PresetList? = gson.fromJson(reader, presetListType)
-                                if (presetList != null) {
-                                    currentPresetsVersion = presetList.version
-                                    val processed = processPresets(presetList.presets ?: emptyList(), "asset")
-                                    allPresets.addAll(processed)
-                                }
-                            }
-                        }
+                        val text = context.assets.open(fileName).bufferedReader().use { it.readText() }
+                        val presetList = json.decodeFromString(PresetList.serializer(), text)
+                        currentPresetsVersion = presetList.version
+                        val processed = processPresets(presetList.presets ?: emptyList(), "asset")
+                        allPresets.addAll(processed)
                     } catch (e: Exception) {
                         Logger.e("JsonUtil", "Failed to load presets from assets", e)
                     }
@@ -234,7 +218,7 @@ object JsonUtil {
      * @return JSON 格式的字符串
      */
     fun presetsToJson(presets: List<MasterPreset>): String {
-        return gson.toJson(PresetList(version = currentPresetsVersion, presets = presets))
+        return json.encodeToString(PresetList.serializer(), PresetList(version = currentPresetsVersion, presets = presets))
     }
     /**
      * Clear in-memory cache so subsequent calls will re-read remote or asset files.

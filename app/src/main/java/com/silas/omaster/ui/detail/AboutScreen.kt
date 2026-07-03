@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Favorite
@@ -82,6 +83,7 @@ import com.silas.omaster.util.rememberScrollHaptics
 fun ProfileScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToSubscription: () -> Unit,
+    onNavigateToSurvey: () -> Unit,
     onScrollStateChanged: (Boolean) -> Unit,
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToOpenSourceLicense: () -> Unit = {},
@@ -138,7 +140,8 @@ fun ProfileScreen(
 
             // 功能入口列表
             ProfileMenuList(
-                onNavigateToSubscription = onNavigateToSubscription
+                onNavigateToSubscription = onNavigateToSubscription,
+                onNavigateToSurvey = onNavigateToSurvey
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -675,7 +678,8 @@ private fun QQGroupCard(context: android.content.Context) {
 
 @Composable
 private fun ProfileMenuList(
-    onNavigateToSubscription: () -> Unit
+    onNavigateToSubscription: () -> Unit,
+    onNavigateToSurvey: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -693,11 +697,19 @@ private fun ProfileMenuList(
         Column(
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
-            // 订阅管理
             ProfileMenuItem(
                 icon = Icons.Default.Cloud,
                 title = stringResource(R.string.sub_title),
                 onClick = onNavigateToSubscription
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = themedTextSecondary().copy(alpha = 0.1f)
+            )
+            ProfileMenuItem(
+                icon = Icons.Default.CloudUpload,
+                title = stringResource(R.string.survey_title),
+                onClick = onNavigateToSurvey
             )
         }
     }

@@ -9,14 +9,15 @@ data class DominantColorResult(
     val dominant: Int,
     val vibrant: Int?,
     val muted: Int?,
-    val textColor: Int
+    val textColor: Int,
+    val palette: List<Int> = emptyList()
 )
 
 object ColorExtractor {
 
     suspend fun extract(bitmap: Bitmap): DominantColorResult = withContext(Dispatchers.Default) {
         val palette = Palette.from(bitmap)
-            .maximumColorCount(8)
+            .maximumColorCount(16)
             .generate()
 
         val dominant = palette.getVibrantColor(
@@ -31,6 +32,16 @@ object ColorExtractor {
             palette.getDarkMutedColor(dominant)
         ).let { if (it != dominant) it else null }
 
+        val paletteColors = buildList {
+            add(dominant)
+            palette.vibrantSwatch?.let { s -> if (s.rgb != dominant) add(s.rgb) }
+            palette.lightVibrantSwatch?.let { s -> if (s.rgb != dominant && !contains(s.rgb)) add(s.rgb) }
+            palette.darkVibrantSwatch?.let { s -> if (s.rgb != dominant && !contains(s.rgb)) add(s.rgb) }
+            palette.mutedSwatch?.let { s -> if (s.rgb != dominant && !contains(s.rgb)) add(s.rgb) }
+            palette.lightMutedSwatch?.let { s -> if (s.rgb != dominant && !contains(s.rgb)) add(s.rgb) }
+            palette.darkMutedSwatch?.let { s -> if (s.rgb != dominant && !contains(s.rgb)) add(s.rgb) }
+        }
+
         val r = android.graphics.Color.red(dominant)
         val g = android.graphics.Color.green(dominant)
         val b = android.graphics.Color.blue(dominant)
@@ -42,7 +53,18 @@ object ColorExtractor {
             dominant = dominant,
             vibrant = vibrant,
             muted = muted,
-            textColor = textColor
+            textColor = textColor,
+            palette = paletteColors
         )
+    }
+
+    private fun MutableList<Int>.contains(color: Int): Boolean {
+        return any { colorSimilar(it, color) }
+    }
+
+    private fun colorSimilar(a: Int, b: Int, threshold: Int = 30): Boolean {
+        return kotlin.math.abs(android.graphics.Color.red(a) - android.graphics.Color.red(b)) < threshold &&
+                kotlin.math.abs(android.graphics.Color.green(a) - android.graphics.Color.green(b)) < threshold &&
+                kotlin.math.abs(android.graphics.Color.blue(a) - android.graphics.Color.blue(b)) < threshold
     }
 }

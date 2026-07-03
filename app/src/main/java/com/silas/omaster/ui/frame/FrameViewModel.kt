@@ -35,7 +35,10 @@ class FrameViewModel(
 
     fun loadImage(uri: Uri) {
         extractJob?.cancel()
-        _state.value = _state.value.copy(imageUri = uri, isLoading = true, error = null)
+        _state.value = _state.value.copy(
+            imageUri = uri, isLoading = true, error = null,
+            selectedColorIndex = 0
+        )
 
         extractJob = viewModelScope.launch {
             try {
@@ -72,6 +75,13 @@ class FrameViewModel(
         renderInternal()
     }
 
+    fun selectColorIndex(index: Int) {
+        val s = _state.value
+        if (index < 0 || index >= (s.colors?.palette?.size ?: 1)) return
+        _state.value = s.copy(selectedColorIndex = index)
+        renderInternal()
+    }
+
     private fun renderInternal() {
         val s = _state.value
         if (s.sourceBitmap == null || s.colors == null) return
@@ -79,10 +89,11 @@ class FrameViewModel(
         renderJob?.cancel()
         renderJob = viewModelScope.launch(Dispatchers.Default) {
             try {
+                val selectedColor = s.colors.palette.getOrElse(s.selectedColorIndex) { s.colors.dominant }
                 val result = FrameRenderer.render(
                     FrameRenderer.Params(
                         source = s.sourceBitmap,
-                        dominantColor = s.colors.dominant,
+                        dominantColor = selectedColor,
                         textColor = s.colors.textColor,
                         title = s.dateTime ?: "",
                         useRoundedCorners = s.useRoundedCorners,
@@ -133,6 +144,7 @@ data class FrameState(
     val dateTime: String? = null,
     val useRoundedCorners: Boolean = true,
     val outputRatio: OutputRatio = OutputRatio.FULL,
+    val selectedColorIndex: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null
 )

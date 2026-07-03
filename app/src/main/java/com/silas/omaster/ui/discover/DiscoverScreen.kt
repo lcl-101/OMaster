@@ -1,6 +1,8 @@
 package com.silas.omaster.ui.discover
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
@@ -58,6 +61,7 @@ import com.silas.omaster.ui.theme.themedBackground
 import com.silas.omaster.ui.theme.themedCardBackground
 import com.silas.omaster.ui.theme.themedTextPrimary
 import com.silas.omaster.ui.theme.themedTextSecondary
+import com.silas.omaster.ui.theme.themedBorderLight
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,6 +69,7 @@ import java.time.LocalDate
 fun DiscoverScreen(
     onNavigateToColorWalk: () -> Unit = {},
     onNavigateToPhotoFrame: () -> Unit = {},
+    onNavigateToSurvey: () -> Unit = {},
     onScrollStateChanged: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -141,6 +146,13 @@ fun DiscoverScreen(
 
             ComingSoonCard(modifier = Modifier.fillMaxWidth())
 
+            Spacer(modifier = Modifier.height(AppDesign.ItemSpacing))
+
+            SurveyEntryCard(
+                onClick = onNavigateToSurvey,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Spacer(modifier = Modifier.height(48.dp))
         }
     }
@@ -168,6 +180,67 @@ fun DiscoverScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun SurveyEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                color = themedBorderLight(),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = themedCardBackground()),
+        shape = RoundedCornerShape(16.dp),
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.CloudUpload, null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    stringResource(R.string.survey_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = themedTextPrimary()
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    stringResource(R.string.survey_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = themedTextSecondary().copy(alpha = 0.6f)
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight, null,
+                tint = themedTextSecondary().copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

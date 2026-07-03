@@ -64,6 +64,7 @@ fun SubscriptionScreen(
     var showEditDialog by remember { mutableStateOf<Subscription?>(null) }
     var selectedSubscription by remember { mutableStateOf<Subscription?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+    val autoUpdateEnabled by config.autoUpdateSubscriptionFlow.collectAsState()
     
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -181,6 +182,50 @@ fun SubscriptionScreen(
                         contentPadding = PaddingValues(AppDesign.ContentPadding),
                         verticalArrangement = Arrangement.spacedBy(AppDesign.SectionSpacing)
                     ) {
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(
+                                        width = 1.dp,
+                                        color = themedBorderLight(),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                colors = CardDefaults.cardColors(containerColor = themedCardBackground()),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.sub_auto_update),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = themedTextPrimary(),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = stringResource(R.string.sub_auto_update_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = themedTextSecondary().copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Switch(
+                                        checked = autoUpdateEnabled,
+                                        onCheckedChange = { config.isAutoUpdateSubscriptionEnabled = it },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = Color.White,
+                                            checkedTrackColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
                         items(subscriptions, key = { it.url }) { sub ->
                             SubscriptionItem(
                                 sub = sub,
@@ -219,20 +264,22 @@ fun SubscriptionScreen(
             Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.sub_add), modifier = Modifier.size(AppDesign.FABSize / 2 + 4.dp))
         }
 
-        if (showBottomSheet && selectedSubscription != null) {
-            SubscriptionDetailBottomSheet(
-                sub = selectedSubscription!!,
-                onDismiss = { showBottomSheet = false },
-                sheetState = sheetState,
-                onEdit = {
-                    showEditDialog = selectedSubscription
-                    showBottomSheet = false
-                },
-                onDelete = {
-                    config.removeSubscription(selectedSubscription!!.url)
-                    showBottomSheet = false
-                }
-            )
+        if (showBottomSheet) {
+            selectedSubscription?.let { sub ->
+                SubscriptionDetailBottomSheet(
+                    sub = sub,
+                    onDismiss = { showBottomSheet = false },
+                    sheetState = sheetState,
+                    onEdit = {
+                        showEditDialog = sub
+                        showBottomSheet = false
+                    },
+                    onDelete = {
+                        config.removeSubscription(sub.url)
+                        showBottomSheet = false
+                    }
+                )
+            }
         }
 
         if (showAddDialog) {

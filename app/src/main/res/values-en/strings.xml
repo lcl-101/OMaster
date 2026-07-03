@@ -29,6 +29,10 @@
     <string name="sub_url_label">Link (JSON URL)</string>
     <string name="sub_name_label">Name (Optional)</string>
     <string name="sub_empty">No subscriptions available</string>
+
+    <!-- Auto Update Subscription -->
+    <string name="sub_auto_update">Auto Update Daily</string>
+    <string name="sub_auto_update_desc">Check for subscription updates on app startup</string>
     <string name="sub_delete_confirm_title">Confirm Delete</string>
     <string name="sub_delete_confirm_msg">Confirm deletion? Associated presets will also be removed.</string>
     <string name="sub_details">Details</string>
@@ -744,6 +748,9 @@
     <string name="photoframe_sharp">Sharp</string>
     <string name="photoframe_reselect">Reselect Photo</string>
 
+    <!-- Color Theme -->
+    <string name="photoframe_color_theme">Background Color</string>
+
     <!-- Dark Mode Descriptions -->
     <string name="dark_mode_system_desc">Auto switch based on system settings</string>
     <string name="dark_mode_light_desc">Always use light theme</string>
@@ -791,4 +798,8 @@
     <string name="holiday_double_ninth_1">Climb high, see far — beautiful scenes fill your viewfinder.</string>
     <string name="holiday_double_ninth_2">Time climbs the hillside, gently softening your lens.</string>
     <string name="holiday_btn_start">Start Shooting</string>
+
+    <!-- User Submission -->
+    <string name="survey_title">Submit Your Preset</string>
+    <string name="survey_desc">Share your filter parameters and samples, help the community grow</string>
 </resources>

@@ -29,6 +29,10 @@
     <string name="sub_url_label">リンク (JSON URL)</string>
     <string name="sub_name_label">名前 (オプション)</string>
     <string name="sub_empty">サブスクリプションがありません</string>
+
+    <!-- 自動更新 -->
+    <string name="sub_auto_update">毎日自動更新</string>
+    <string name="sub_auto_update_desc">アプリ起動時に自動で更新を確認します</string>
     <string name="sub_delete_confirm_title">削除の確認</string>
     <string name="sub_delete_confirm_msg">このサブスクリプションを削除してもよろしいですか？関連するプリセットも表示されなくなります。</string>
     <string name="sub_details">詳細</string>
@@ -590,4 +594,11 @@
     <string name="photoframe_rounded">角丸</string>
     <string name="photoframe_sharp">シャープ</string>
     <string name="photoframe_reselect">写真を再選択</string>
+
+    <!-- カラーテーマ -->
+    <string name="photoframe_color_theme">背景色</string>
+
+    <!-- ユーザー投稿 -->
+    <string name="survey_title">プリセットを投稿</string>
+    <string name="survey_desc">あなたのフィルターパラメータと作例を共有し、コミュニティの成長に貢献しましょう</string>
 </resources>

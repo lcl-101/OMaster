@@ -29,6 +29,10 @@
     <string name="sub_url_label">链接 (JSON URL)</string>
     <string name="sub_name_label">名称 (可选)</string>
     <string name="sub_empty">暂无订阅</string>
+
+    <!-- 订阅自动更新 -->
+    <string name="sub_auto_update">每日自动更新</string>
+    <string name="sub_auto_update_desc">启动应用时自动检查订阅更新</string>
     <string name="sub_delete_confirm_title">确认删除</string>
     <string name="sub_delete_confirm_msg">确定要删除这个订阅吗？对应的预设也将不再显示。</string>
     <string name="sub_details">订阅详情</string>
@@ -754,6 +758,9 @@
     <string name="photoframe_sharp">直角</string>
     <string name="photoframe_reselect">重新选择图片</string>
 
+    <!-- 相框颜色主题 -->
+    <string name="photoframe_color_theme">背景配色</string>
+
     <!-- 更新渠道描述 -->
     <string name="channel_gitee_desc_detail">国内访问更快</string>
     <string name="channel_github_desc_detail">国际访问，可能较慢</string>
@@ -792,4 +799,8 @@
     <string name="holiday_double_ninth_1">登高望远，镜头里都是好风景。</string>
     <string name="holiday_double_ninth_2">时光爬上了山坡，也温柔了你的镜头。</string>
     <string name="holiday_btn_start">开始拍摄</string>
+
+    <!-- 用户投稿 -->
+    <string name="survey_title">用户投稿</string>
+    <string name="survey_desc">分享你的滤镜参数和样片，帮助社区成长</string>
 </resources>
